@@ -1,0 +1,54 @@
+plugins {
+	id "idea"
+	id "io.freefair.lombok" version "6.6.3" apply false
+	id "io.freefair.compress.7z" version "8.0.1"
+	id "com.github.johnrengelman.shadow" version "$shadowVersion" apply false
+	id 'org.zeroturnaround.gradle.jrebel' version '1.1.12' apply false
+	id 'com.vaadin' version "$vaadinVersion" apply false
+	id 'org.springframework.boot' version "$springBootVersion" apply false
+	id 'io.spring.dependency-management' version '1.1.0' apply false
+}
+
+group 'jrebel'
+
+idea {
+	project {
+		languageLevel = JavaVersion.VERSION_17
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+subprojects {
+
+	version "$project.version"
+
+	repositories {
+		if (!System.getenv('BUILD_DISPLAY_NAME'))
+			mavenLocal()
+		mavenCentral()
+	}
+
+	tasks.withType(Javadoc).configureEach {
+		enabled = false
+	}
+
+	tasks.withType(AbstractPublishToMaven).tap {
+		configureEach {
+			dependsOn(clearCachedArtifacts)
+		}
+	}
+
+	tasks.withType(GroovyCompile).configureEach {
+
+		groovyOptions.fork = true
+		groovyOptions.forkOptions.jvmArgs = ['-Dgroovy.parameters=true']
+	}
+
+	tasks.withType(AbstractArchiveTask).configureEach {
+		preserveFileTimestamps = false
+		reproducibleFileOrder = true
+	}
+}
